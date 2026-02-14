@@ -7,8 +7,8 @@ interface SourceBadgeProps {
 export function SourceBadge({ source }: SourceBadgeProps) {
     const labels: Record<string, string> = {
         google: 'Google',
-        bing: 'Bing',
         duckduckgo: 'DDG',
+        azure_vision: 'Azure',
     };
 
     return (

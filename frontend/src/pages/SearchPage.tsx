@@ -5,7 +5,7 @@ import { SourceFilters } from '../components/SourceFilters';
 import { ResultCard, ResultCardSkeleton } from '../components/ResultCard';
 import { SearchParams } from '../services/api';
 
-const ALL_SOURCES = ['google', 'bing', 'duckduckgo'];
+const ALL_SOURCES = ['google', 'duckduckgo'];
 
 export function SearchPage() {
     const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
@@ -53,7 +53,7 @@ export function SearchPage() {
                         <>
                             <h1 className="search-title">Search Smarter</h1>
                             <p className="search-subtitle">
-                                Aggregating results from Google, Bing, and DuckDuckGo with intelligent deduplication
+                                Aggregating results from Google and DuckDuckGo with intelligent deduplication, powered by Azure Computer Vision
                             </p>
                         </>
                     )}

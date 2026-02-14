@@ -10,8 +10,8 @@ from enum import Enum
 class SearchSource(str, Enum):
     """Search engine sources."""
     GOOGLE = "google"
-    BING = "bing"
     DUCKDUCKGO = "duckduckgo"
+    AZURE_VISION = "azure_vision"
 
 
 class SearchResult(BaseModel):
@@ -52,7 +52,7 @@ class SearchRequest(BaseModel):
     """Search request from client."""
     query: str = Field(..., min_length=1, max_length=500)
     sources: List[SearchSource] = Field(
-        default=[SearchSource.GOOGLE, SearchSource.BING, SearchSource.DUCKDUCKGO]
+        default=[SearchSource.GOOGLE, SearchSource.DUCKDUCKGO]
     )
     max_results: int = Field(default=30, ge=1, le=100)
     

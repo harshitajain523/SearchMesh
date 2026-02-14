@@ -36,9 +36,9 @@ async def search(
     Execute federated search across multiple engines.
     
     - **q**: Search query string
-    - **sources**: List of search engines (google, bing, duckduckgo)
+    - **sources**: List of search engines (google, duckduckgo)
     - **max_results**: Maximum number of results to return
-    - **image_search**: Whether to search for images
+    - **image_search**: Whether to search for images (enables Azure Vision enrichment)
     - **dedupe**: Whether to deduplicate results
     
     Returns aggregated, deduplicated results from all sources.
@@ -46,7 +46,7 @@ async def search(
     # Build request
     request = SearchRequest(
         query=q,
-        sources=sources or [SearchSource.GOOGLE, SearchSource.BING, SearchSource.DUCKDUCKGO],
+        sources=sources or [SearchSource.GOOGLE, SearchSource.DUCKDUCKGO],
         max_results=max_results,
         image_search=image_search,
     )
@@ -83,3 +83,30 @@ async def get_engine_status() -> List[dict]:
     Returns configuration and circuit breaker status for each engine.
     """
     return aggregator.get_engine_status()
+
+
+@router.post("/analyze-image")
+async def analyze_image(image_url: str = Query(..., description="URL of image to analyze")):
+    """
+    Analyze an image using Azure Computer Vision.
+    
+    Returns tags, captions, OCR text, and dimensions.
+    Requires Azure Computer Vision to be configured.
+    """
+    from app.engines.azure_vision import AzureVisionEngine
+    
+    vision = AzureVisionEngine()
+    if not vision.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Azure Computer Vision is not configured"
+        )
+    
+    analysis = await vision.analyze_image(image_url)
+    if not analysis:
+        raise HTTPException(
+            status_code=422,
+            detail="Failed to analyze image"
+        )
+    
+    return {"image_url": image_url, "analysis": analysis}

@@ -6,7 +6,6 @@ interface SourceFiltersProps {
 
 const sourceInfo: Record<string, { label: string; className: string }> = {
     google: { label: 'Google', className: 'google' },
-    bing: { label: 'Bing', className: 'bing' },
     duckduckgo: { label: 'DuckDuckGo', className: 'duckduckgo' },
 };
 

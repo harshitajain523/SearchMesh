@@ -10,8 +10,8 @@ import logging
 
 from app.engines.base import BaseSearchEngine
 from app.engines.google import GoogleSearchEngine
-from app.engines.bing import BingSearchEngine
 from app.engines.duckduckgo import DuckDuckGoSearchEngine
+from app.engines.azure_vision import AzureVisionEngine
 from app.models.search import (
     SearchSource, 
     SearchResult, 
@@ -32,14 +32,15 @@ class SearchAggregator:
     - Graceful error handling (partial results on failures)
     - Timeout handling
     - Circuit breaker integration (via engines)
+    - Azure Vision enrichment for image results
     """
     
     def __init__(self):
         self.engines: dict[SearchSource, BaseSearchEngine] = {
             SearchSource.GOOGLE: GoogleSearchEngine(),
-            SearchSource.BING: BingSearchEngine(),
             SearchSource.DUCKDUCKGO: DuckDuckGoSearchEngine(),
         }
+        self.azure_vision = AzureVisionEngine()
     
     async def search(
         self, 
@@ -59,7 +60,7 @@ class SearchAggregator:
         start_time = time.time()
         settings = get_settings()
         
-        # Get enabled engines
+        # Get enabled engines (excluding Azure Vision which is an enrichment engine)
         engines_to_query = [
             self.engines[source] 
             for source in request.sources 
@@ -96,6 +97,16 @@ class SearchAggregator:
             else:
                 # Empty results (might be unconfigured)
                 sources_failed.append(engine.source)
+        
+        # Enrich with Azure Vision for image searches
+        if request.image_search and self.azure_vision.is_configured:
+            try:
+                all_results = await self.azure_vision.analyze_image_batch(all_results)
+                if SearchSource.AZURE_VISION not in sources_succeeded:
+                    sources_succeeded.append(SearchSource.AZURE_VISION)
+            except Exception as e:
+                logger.error(f"Azure Vision enrichment failed: {e}")
+                sources_failed.append(SearchSource.AZURE_VISION)
         
         # Apply deduplication if available
         duplicates_removed = 0
@@ -142,7 +153,9 @@ class SearchAggregator:
     
     def get_engine_status(self) -> List[dict]:
         """Get status of all search engines."""
-        return [engine.get_status() for engine in self.engines.values()]
+        statuses = [engine.get_status() for engine in self.engines.values()]
+        statuses.append(self.azure_vision.get_status())
+        return statuses
 
 
 # Global aggregator instance

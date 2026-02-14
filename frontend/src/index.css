@@ -16,7 +16,7 @@
   
   /* Source Colors */
   --google-color: #4285f4;
-  --bing-color: #00a6f0;
+  --azure-color: #0078d4;
   --ddg-color: #de5833;
   
   /* Text */
@@ -314,9 +314,9 @@ a:hover {
   background: rgba(66, 133, 244, 0.1);
 }
 
-.source-toggle.bing.active {
-  border-color: var(--bing-color);
-  background: rgba(0, 166, 240, 0.1);
+.source-toggle.azure_vision.active {
+  border-color: var(--azure-color);
+  background: rgba(0, 120, 212, 0.1);
 }
 
 .source-toggle.duckduckgo.active {
@@ -441,9 +441,9 @@ a:hover {
   color: var(--google-color);
 }
 
-.source-badge.bing {
-  background: rgba(0, 166, 240, 0.15);
-  color: var(--bing-color);
+.source-badge.azure_vision {
+  background: rgba(0, 120, 212, 0.15);
+  color: var(--azure-color);
 }
 
 .source-badge.duckduckgo {

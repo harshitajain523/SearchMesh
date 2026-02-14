@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     # Search Engine API Keys
     google_api_key: Optional[str] = None
     google_search_engine_id: Optional[str] = None
-    bing_api_key: Optional[str] = None
+    
+    # Azure Computer Vision
+    azure_vision_key: Optional[str] = None
+    azure_vision_endpoint: Optional[str] = None
     
     # Redis
     redis_url: str = "redis://localhost:6379"

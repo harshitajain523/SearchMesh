@@ -1,106 +1,105 @@
-# SearchMesh - Federated Search Engine
+# SearchMesh – Federated Search Engine
 
-A federated search engine that aggregates results from Google, Bing, and DuckDuckGo with intelligent deduplication and rule-based filtering.
+A pure Software Engineering project that aggregates results from Google and DuckDuckGo, deduplicates them using algorithmic approaches, and enriches image results with Azure Computer Vision.
 
-## Features
+> **No ML/AI in search logic** – all ranking, deduplication, and filtering is algorithmic.
 
-- 🔍 **Multi-Source Search**: Query Google, Bing, and DuckDuckGo simultaneously
-- 🔄 **Smart Deduplication**: URL normalization + fuzzy title matching
-- ⚡ **Concurrent Execution**: Parallel API calls with timeout handling
-- 🛡️ **Circuit Breaker**: Graceful degradation when APIs fail
-- 🎨 **Modern UI**: Dark theme with glassmorphism effects
+---
 
-## Tech Stack
+## Architecture
 
-- **Backend**: FastAPI (Python 3.11)
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Vanilla CSS with custom design system
-- **State Management**: TanStack Query
+```
+┌─────────────┐     ┌──────────────────────────────────┐
+│  React UI   │────▶│  FastAPI Backend (async)          │
+│  (Vite+TS)  │     │                                  │
+└─────────────┘     │  ┌──────────┐  ┌──────────────┐  │
+                    │  │  Google   │  │  DuckDuckGo  │  │
+                    │  │  Adapter  │  │  Adapter     │  │
+                    │  └──────────┘  └──────────────┘  │
+                    │                                  │
+                    │  ┌──────────────────────────────┐│
+                    │  │  Azure Computer Vision       ││
+                    │  │  (image enrichment)          ││
+                    │  └──────────────────────────────┘│
+                    │                                  │
+                    │  ┌──────────┐  ┌──────────────┐  │
+                    │  │ Dedup    │  │  Circuit      │  │
+                    │  │ Engine   │  │  Breaker      │  │
+                    │  └──────────┘  └──────────────┘  │
+                    └──────────────────────────────────┘
+```
+
+---
 
 ## Quick Start
 
-### 1. Clone and Setup
+### Prerequisites
 
-```bash
-cd searchmesh
-```
+- Python 3.11+
+- Node.js 18+
+- Google Custom Search API key + Search Engine ID
+- Azure Computer Vision key (optional, for image analysis)
 
-### 2. Backend Setup
+### Backend
 
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run development server
-uvicorn app.main:app --reload --port 8000
+cp .env.example .env   # ← add your API keys
+uvicorn app.main:app --reload
 ```
 
-### 3. Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
 ```
 
-### 4. Docker (Optional)
+### Docker (full stack)
 
 ```bash
-# Create .env file with API keys first
 docker-compose up --build
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+# API docs: http://localhost:8000/docs
 ```
+
+---
 
 ## Environment Variables
 
-Create a `.env` file in the backend directory:
+| Variable                  | Required | Description                     |
+| ------------------------- | -------- | ------------------------------- |
+| `GOOGLE_API_KEY`          | Yes      | Google Custom Search API key    |
+| `GOOGLE_SEARCH_ENGINE_ID` | Yes      | Programmable Search Engine ID   |
+| `AZURE_VISION_KEY`        | No       | Azure Computer Vision API key   |
+| `AZURE_VISION_ENDPOINT`   | No       | Azure CV endpoint URL           |
+| `REDIS_URL`               | No       | Redis URL for caching (Phase 2) |
+| `DATABASE_URL`            | No       | PostgreSQL URL (Phase 3)        |
+| `DEBUG`                   | No       | Enable debug mode               |
 
-```env
-GOOGLE_API_KEY=your_google_api_key
-GOOGLE_SEARCH_ENGINE_ID=your_search_engine_id
-BING_API_KEY=your_bing_api_key
-REDIS_URL=redis://localhost:6379
-DEBUG=true
-```
+---
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/search` | GET | Search with query params |
-| `/api/v1/search` | POST | Search with JSON body |
-| `/api/v1/search/engines` | GET | Get engine status |
-| `/api/v1/health` | GET | Health check |
-| `/docs` | GET | Swagger documentation |
+| Method | Endpoint                                     | Description                 |
+| ------ | -------------------------------------------- | --------------------------- |
+| GET    | `/api/v1/search?q=query`                     | Federated search            |
+| POST   | `/api/v1/search`                             | Search with full options    |
+| POST   | `/api/v1/search/analyze-image?image_url=URL` | Azure Vision image analysis |
+| GET    | `/api/v1/search/engines`                     | Engine status               |
+| GET    | `/api/v1/health`                             | Health check                |
 
-## Deployment
+### Search Parameters
 
-### Frontend (Vercel)
+```
+GET /api/v1/search?q=python+tutorial&sources=google&sources=duckduckgo&max_results=20&dedupe=true
+```
 
-1. Push to GitHub
-2. Import project in Vercel
-3. Set root directory to `frontend`
-4. Add environment variable `VITE_API_URL` pointing to your backend
-
-### Backend (Railway/Render)
-
-1. Create new project on Railway or Render
-2. Set root directory to `backend`
-3. Add environment variables (API keys)
-4. Deploy
+---
 
 ## Project Structure
 
@@ -108,25 +107,54 @@ DEBUG=true
 searchmesh/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # FastAPI routes
-│   │   ├── core/         # Config, circuit breaker
-│   │   ├── engines/      # Search engine adapters
-│   │   ├── dedup/        # Deduplication algorithms
-│   │   ├── models/       # Pydantic models
-│   │   └── main.py       # FastAPI app
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   ├── api/           # REST endpoints
+│   │   ├── core/          # Config, circuit breaker
+│   │   ├── engines/       # Search adapters
+│   │   │   ├── google.py
+│   │   │   ├── duckduckgo.py
+│   │   │   ├── azure_vision.py
+│   │   │   └── aggregator.py
+│   │   ├── dedup/         # URL normalization, fuzzy matching
+│   │   ├── models/        # Pydantic schemas
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── pages/        # Page components
-│   │   ├── services/     # API services
-│   │   └── hooks/        # Custom hooks
-│   ├── Dockerfile
-│   └── package.json
-└── docker-compose.yml
+│   │   ├── components/    # React components
+│   │   ├── pages/         # Page views
+│   │   ├── hooks/         # Custom hooks
+│   │   └── services/      # API client
+│   ├── vercel.json
+│   └── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
-## License
+---
 
-MIT
+## Deployment
+
+### Frontend → Vercel
+
+1. Push to GitHub
+2. Import in Vercel, set root to `frontend`
+3. Set env: `VITE_API_URL=https://your-backend-url/api/v1`
+
+### Backend → Railway / Render
+
+1. Import repo, set root to `backend`
+2. Set environment variables
+3. Start command: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+
+---
+
+## Tech Stack
+
+| Layer    | Technology                                            |
+| -------- | ----------------------------------------------------- |
+| Backend  | Python, FastAPI, httpx, Pydantic                      |
+| Frontend | React 18, TypeScript, Vite, TanStack Query            |
+| Search   | Google Custom Search, DuckDuckGo (scraping)           |
+| Vision   | Azure Computer Vision (tags, captions, OCR)           |
+| Infra    | Docker, Vercel, Redis (planned), PostgreSQL (planned) |
