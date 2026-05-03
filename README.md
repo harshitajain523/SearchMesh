@@ -1,3 +1,5 @@
+UPDATE : Deprecation of Google Custom Search API lead to lacking of source for data aggregation outside of DuckDuckGo
+
 # SearchMesh
 
 A federated search aggregation platform that queries multiple search providers concurrently, deduplicates results algorithmically, and enriches image content through Azure Computer Vision.
